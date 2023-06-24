@@ -1,8 +1,13 @@
 from django.db import models
+from django.db.models.signals import m2m_changed, post_save
+from django.dispatch import receiver
 
 
 class Nationality(models.Model):
     name = models.CharField(max_length=64)
+
+    class Meta:
+        verbose_name_plural = 'Nationalities'
 
     def __str__(self):
         return self.name
@@ -11,14 +16,8 @@ class Nationality(models.Model):
 class Difficulty(models.Model):
     name = models.CharField(max_length=32)
 
-    def __str__(self):
-        return self.name
-
-
-class Player(models.Model):
-    name = models.CharField(max_length=64)
-    rating = models.DecimalField(max_digits=6, decimal_places=2)
-    nationality = models.ForeignKey(Nationality, on_delete=models.PROTECT)
+    class Meta:
+        verbose_name_plural = 'Difficulties'
 
     def __str__(self):
         return self.name
@@ -28,6 +27,17 @@ class Creator(models.Model):
     name = models.CharField(max_length=64)
     rating = models.DecimalField(max_digits=6, decimal_places=2)
     nationality = models.ForeignKey(Nationality, on_delete=models.PROTECT)
+    position_in_rating = models.IntegerField()
+
+    def __str__(self):
+        return self.name
+
+
+class Player(models.Model):
+    name = models.CharField(max_length=64)
+    rating = models.DecimalField(max_digits=6, decimal_places=2, default=0)
+    nationality = models.ForeignKey(Nationality, on_delete=models.PROTECT)
+    position_in_rating = models.IntegerField()
 
     def __str__(self):
         return self.name
@@ -38,8 +48,30 @@ class Demon(models.Model):
     position = models.IntegerField()
     difficulty = models.ForeignKey(Difficulty, on_delete=models.PROTECT)
     difficulty_as_number = models.DecimalField(max_digits=6, decimal_places=2)
-    verifier = models.ForeignKey(Player, on_delete=models.PROTECT)
     creators = models.ManyToManyField(Creator)
+    completed_by = models.ManyToManyField(Player)
 
     def __str__(self):
         return self.name
+
+
+# For top 10 players
+@receiver(m2m_changed, sender=Demon.completed_by.through)
+def update_player_rating(sender, instance, action, pk_set, **kwargs):
+    if action in ['post_add', 'post_remove']:
+        for player_id in pk_set:
+            rating = Demon.objects.filter(completed_by=player_id).aggregate(rating=models.Sum('difficulty_as_number'))['rating']
+            Player.objects.filter(pk=player_id).update(rating=rating)
+
+
+# For top 10 creators
+@receiver(m2m_changed, sender=Demon.creators.through)
+def update_creator_rating(sender, instance, action, pk_set, **kwargs):
+    for player_id in pk_set:
+        if action in ['post_add', 'post_remove']:
+            rating = Demon.objects.filter(creators=player_id).aggregate(rating=models.Count('creators'))['rating']
+            Creator.objects.filter(pk=player_id).update(rating=rating)
+
+
+# Position for players and creators
+# Auto rating for new levels
