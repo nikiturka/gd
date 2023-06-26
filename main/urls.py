@@ -1,6 +1,5 @@
 from django.urls import path, include
-from main.views import NationalityListCreate, NationalityUpdateDestroy, DifficultyListCreate, DifficultyUpdateDestroy, \
-PlayerListCreate, PlayerUpdateDestroy, PlayersTop10, CreatorListCreate, CreatorUpdateDestroy, CreatorsTop10
+from main.views import *
 
 urlpatterns = [
     path('api/', include('rest_framework.urls')),
@@ -14,4 +13,6 @@ urlpatterns = [
     path('api/v1/creators', CreatorListCreate.as_view()),
     path('api/v1/creators/<int:pk>', CreatorUpdateDestroy.as_view()),
     path('api/v1/creators/top10', CreatorsTop10.as_view()),
+    path('api/v1/demons/top', DemonTop.as_view()),
+
 ]

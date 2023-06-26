@@ -25,7 +25,7 @@ class Difficulty(models.Model):
 
 class Creator(models.Model):
     name = models.CharField(max_length=64)
-    rating = models.DecimalField(max_digits=6, decimal_places=2)
+    rating = models.IntegerField(null=True, blank=True)
     nationality = models.ForeignKey(Nationality, on_delete=models.PROTECT)
     position_in_rating = models.IntegerField()
 
@@ -35,7 +35,7 @@ class Creator(models.Model):
 
 class Player(models.Model):
     name = models.CharField(max_length=64)
-    rating = models.DecimalField(max_digits=6, decimal_places=2, default=0)
+    rating = models.IntegerField(null=True, blank=True)
     nationality = models.ForeignKey(Nationality, on_delete=models.PROTECT)
     position_in_rating = models.IntegerField()
 
@@ -47,7 +47,7 @@ class Demon(models.Model):
     name = models.CharField(max_length=100)
     position = models.IntegerField()
     difficulty = models.ForeignKey(Difficulty, on_delete=models.PROTECT)
-    difficulty_as_number = models.DecimalField(max_digits=6, decimal_places=2)
+    difficulty_as_number = models.IntegerField(null=True, blank=True)
     creators = models.ManyToManyField(Creator)
     completed_by = models.ManyToManyField(Player)
 
@@ -55,6 +55,7 @@ class Demon(models.Model):
         return self.name
 
 
+# AUTO-COUNT RATING
 # For top 10 players
 @receiver(m2m_changed, sender=Demon.completed_by.through)
 def update_player_rating(sender, instance, action, pk_set, **kwargs):
@@ -73,5 +74,11 @@ def update_creator_rating(sender, instance, action, pk_set, **kwargs):
             Creator.objects.filter(pk=player_id).update(rating=rating)
 
 
-# Position for players and creators
-# Auto rating for new levels
+# For Demon rating calculations
+@receiver(post_save, sender=Demon)
+def update_demon_position(sender, instance, **kwargs):
+    position = instance.position
+    new_difficulty_as_number = 10000 - (100 * position)
+    instance.difficulty_as_number = new_difficulty_as_number
+
+# Position for players, creators, demons

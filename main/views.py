@@ -207,3 +207,36 @@ class CreatorsTop10(APIView):
         creators_serialized = CreatorSerializer(creators, many=True)
 
         return Response(creators_serialized.data)
+
+
+class DemonTop(APIView):
+    def get(self, request):
+        demons = Demon.objects.all().order_by('-difficulty_as_number')
+        demons_serialized = DemonSerializer(demons, many=True)
+
+        return Response(demons_serialized.data)
+
+    def post(self, request):
+        new_demon = Demon.objects.create(
+            name=request.data["name"],
+            position=request.data["position"],
+            difficulty=Difficulty.objects.get(pk=request.data["difficulty"]),
+        )
+
+        creators = request.data["creators"]
+
+        for creator_id in creators:
+            creator = Creator.objects.get(pk=creator_id)
+            new_demon.creators.add(creator)
+
+        completed_by = request.data["completed_by"]
+
+        for player_id in completed_by:
+            player = Player.objects.get(pk=player_id)
+            new_demon.completed_by.add(player)
+
+        new_demon.save()
+
+        new_demon_serialized = DemonSerializer(new_demon)
+
+        return Response(new_demon_serialized.data)
