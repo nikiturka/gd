@@ -27,7 +27,6 @@ class Creator(models.Model):
     name = models.CharField(max_length=64)
     rating = models.IntegerField(null=True, blank=True)
     nationality = models.ForeignKey(Nationality, on_delete=models.PROTECT)
-    position_in_rating = models.IntegerField()
 
     def __str__(self):
         return self.name
@@ -37,7 +36,6 @@ class Player(models.Model):
     name = models.CharField(max_length=64)
     rating = models.IntegerField(null=True, blank=True)
     nationality = models.ForeignKey(Nationality, on_delete=models.PROTECT)
-    position_in_rating = models.IntegerField()
 
     def __str__(self):
         return self.name
@@ -55,7 +53,8 @@ class Demon(models.Model):
         return self.name
 
 
-# AUTO-COUNT RATING
+# !!! AUTO-COUNT RATING !!!
+
 # For top 10 players
 @receiver(m2m_changed, sender=Demon.completed_by.through)
 def update_player_rating(sender, instance, action, pk_set, **kwargs):
@@ -76,9 +75,19 @@ def update_creator_rating(sender, instance, action, pk_set, **kwargs):
 
 # For Demon rating calculations
 @receiver(post_save, sender=Demon)
-def update_demon_position(sender, instance, **kwargs):
+def update_demon_rating(sender, instance, **kwargs):
     position = instance.position
     new_difficulty_as_number = 10000 - (100 * position)
-    instance.difficulty_as_number = new_difficulty_as_number
+    Demon.objects.filter(pk=instance.pk).update(difficulty_as_number=new_difficulty_as_number)
 
-# Position for players, creators, demons
+    for demon in Demon.objects.all():
+        if demon.difficulty_as_number:
+            if demon.difficulty_as_number <= new_difficulty_as_number and demon != instance:
+                new_position = demon.position + 1
+                new_difficulty_as_number = 10000 - (100 * new_position)
+
+                Demon.\
+                    objects.\
+                    filter(pk=demon.pk).\
+                    update(position=new_position, difficulty_as_number=new_difficulty_as_number)
+

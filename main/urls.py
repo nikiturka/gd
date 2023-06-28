@@ -14,5 +14,6 @@ urlpatterns = [
     path('api/v1/creators/<int:pk>', CreatorUpdateDestroy.as_view()),
     path('api/v1/creators/top10', CreatorsTop10.as_view()),
     path('api/v1/demons/top', DemonTop.as_view()),
-
+    path('api/v1/demons/top-short/', DemonTop.as_view()),
+    path('api/v1/demons/<int:pk>', DemonUpdateDestroy.as_view()),
 ]

@@ -38,3 +38,10 @@ class DemonSerializer(serializers.ModelSerializer):
         model = Demon
         fields = '__all__'
 
+
+class DemonSerializerShort(serializers.ModelSerializer):
+
+    class Meta:
+        model = Demon
+        fields = ('id', 'name', 'position', 'difficulty', 'difficulty_as_number')
+

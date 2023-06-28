@@ -3,7 +3,8 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from main.models import Player, Nationality, Creator, Demon, Difficulty
 from main.serializers import PlayerSerializer, NationalitySerializer, DifficultySerializer, CreatorSerializer,\
-DemonSerializer
+DemonSerializer, DemonSerializerShort
+
 
 # NATIONALITY ENDPOINTS
 
@@ -212,7 +213,12 @@ class CreatorsTop10(APIView):
 class DemonTop(APIView):
     def get(self, request):
         demons = Demon.objects.all().order_by('-difficulty_as_number')
-        demons_serialized = DemonSerializer(demons, many=True)
+        url = request.get_full_path()
+
+        if '/top-short/' in url:
+            demons_serialized = DemonSerializerShort(demons, many=True)
+        else:
+            demons_serialized = DemonSerializer(demons, many=True)
 
         return Response(demons_serialized.data)
 
@@ -240,3 +246,53 @@ class DemonTop(APIView):
         new_demon_serialized = DemonSerializer(new_demon)
 
         return Response(new_demon_serialized.data)
+
+
+class DemonUpdateDestroy(APIView):
+    def get(self, request, pk):
+        demon = Demon.objects.get(pk=pk)
+        demons_serialized = DemonSerializer(demon)
+
+        return Response(demons_serialized.data)
+
+    def put(self, request, pk):
+        demon = Demon.objects.get(pk=pk)
+        fields_to_update = request.data
+
+        for key, value in fields_to_update.items():
+            if key != 'creators' and key != 'completed_by' and key != 'difficulty':
+                setattr(demon, key, value)
+
+            elif key == 'difficulty':
+                difficulty = Difficulty.objects.get(pk=request.data["difficulty"])
+                setattr(demon, key, difficulty)
+
+            elif key == 'creators':
+                for creator in demon.creators.all():
+                    demon.creators.remove(creator)
+
+                for creator_id in value:
+                    creator = Creator.objects.get(pk=creator_id)
+
+                    demon.creators.add(creator)
+
+            elif key == 'completed_by':
+                for player in demon.completed_by.all():
+                    demon.completed.remove(player)
+
+                for player_id in value:
+                    player = Player.objects.get(pk=player_id)
+
+                    demon.completed_by.add(player)
+
+        demon.save()
+
+        demon_serialized = DemonSerializer(demon)
+
+        return Response(demon_serialized.data)
+
+    def delete(self, request, pk):
+        demon = Demon.objects.get(pk=pk)
+        demon.delete()
+
+        return Response({"Deleted demon: ": demon.name})
