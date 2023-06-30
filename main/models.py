@@ -80,14 +80,17 @@ def update_demon_rating(sender, instance, **kwargs):
     new_difficulty_as_number = 10000 - (100 * position)
     Demon.objects.filter(pk=instance.pk).update(difficulty_as_number=new_difficulty_as_number)
 
-    for demon in Demon.objects.all():
-        if demon.difficulty_as_number:
-            if demon.difficulty_as_number <= new_difficulty_as_number and demon != instance:
+    demons = Demon.objects.exclude(position=None).order_by('position')
+
+    for demon in demons:
+        if demon.pk != instance.pk:
+            if demon.difficulty_as_number <= new_difficulty_as_number:
                 new_position = demon.position + 1
                 new_difficulty_as_number = 10000 - (100 * new_position)
 
-                Demon.\
-                    objects.\
-                    filter(pk=demon.pk).\
-                    update(position=new_position, difficulty_as_number=new_difficulty_as_number)
+                Demon.objects.filter(pk=demon.pk)\
+                    .update(position=new_position, difficulty_as_number=new_difficulty_as_number)
+
+
+
 

@@ -1,4 +1,5 @@
 from django.forms import model_to_dict
+from rest_framework import viewsets
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from main.models import Player, Nationality, Creator, Demon, Difficulty
@@ -55,49 +56,52 @@ class NationalityUpdateDestroy(APIView):
         return Response({'Deleted object:' + nationality_name})
 
 
-class DifficultyListCreate(APIView):
-    def get(self, request):
-        difficultes = Difficulty.objects.all()
-        difficultes_serialized = DifficultySerializer(difficultes, many=True)
-
-        return Response(difficultes_serialized.data)
-
-    def post(self, request):
-        new_difficulty = Difficulty.objects.create(
-            name=request.data["name"]
-        )
-
-        return Response(model_to_dict(new_difficulty))
-
-
-# Update + Delete
-class DifficultyUpdateDestroy(APIView):
-    def get(self, request, pk):
-        difficulty = Difficulty.objects.get(pk=pk)
-        difficulty_serialized = DifficultySerializer(difficulty)
-
-        return Response(difficulty_serialized.data)
-
-    def put(self, request, pk):
-        difficulty = Difficulty.objects.get(pk=pk)
-        fields_to_update = request.data
-
-        for key, value in fields_to_update.items():
-            setattr(difficulty, key, value)
-
-        difficulty.save()
-
-        difficulty_serialized = DifficultySerializer(difficulty)
-
-        return Response(difficulty_serialized.data)
-
-    def delete(self, request, pk):
-        difficulty = Difficulty.objects.get(pk=pk)
-        difficulty_name = difficulty.name
-
-        difficulty.delete()
-
-        return Response({'Deleted object:' + difficulty_name})
+# class DifficultyListCreate(APIView):
+#     def get(self, request):
+#         difficultes = Difficulty.objects.all()
+#         difficultes_serialized = DifficultySerializer(difficultes, many=True)
+#
+#         return Response(difficultes_serialized.data)
+#
+#     def post(self, request):
+#         new_difficulty = Difficulty.objects.create(
+#             name=request.data["name"]
+#         )
+#
+#         return Response(model_to_dict(new_difficulty))
+#
+#
+# # Update + Delete
+# class DifficultyUpdateDestroy(APIView):
+#     def get(self, request, pk):
+#         difficulty = Difficulty.objects.get(pk=pk)
+#         difficulty_serialized = DifficultySerializer(difficulty)
+#
+#         return Response(difficulty_serialized.data)
+#
+#     def put(self, request, pk):
+#         difficulty = Difficulty.objects.get(pk=pk)
+#         fields_to_update = request.data
+#
+#         for key, value in fields_to_update.items():
+#             setattr(difficulty, key, value)
+#
+#         difficulty.save()
+#
+#         difficulty_serialized = DifficultySerializer(difficulty)
+#
+#         return Response(difficulty_serialized.data)
+#
+#     def delete(self, request, pk):
+#         difficulty = Difficulty.objects.get(pk=pk)
+#         difficulty_name = difficulty.name
+#
+#         difficulty.delete()
+#
+#         return Response({'Deleted object:' + difficulty_name})
+class DifficultyViewSet(viewsets.ModelViewSet):
+    queryset = Difficulty.objects.all()
+    serializer_class = DifficultySerializer
 
 
 class PlayerListCreate(APIView):
