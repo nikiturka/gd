@@ -38,6 +38,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'main.middlewares.TimerMiddleware',
+    'main.middlewares.CountMethodMiddleware'
 ]
 
 ROOT_URLCONF = 'gd.urls'
