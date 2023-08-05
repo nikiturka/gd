@@ -15,7 +15,6 @@ class DifficultySerializer(serializers.ModelSerializer):
 
 
 class PlayerSerializer(serializers.ModelSerializer):
-    nationality = NationalitySerializer()
 
     class Meta:
         model = Player
@@ -23,7 +22,6 @@ class PlayerSerializer(serializers.ModelSerializer):
 
 
 class CreatorSerializer(serializers.ModelSerializer):
-    nationality = NationalitySerializer()
 
     class Meta:
         model = Creator
